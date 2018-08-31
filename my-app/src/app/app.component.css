@@ -1,0 +1,11 @@
+.main-contain{
+  border: 1px solid rgba(0,0,0,.03);
+  box-shadow: 0 2px 2px rgba(0,0,0,.24), 0 0 2px rgba(0,0,0,.12);
+  margin: 4px;
+  width: 40%;
+  padding: 14px;
+}
+.flow_button{
+  float:right;
+  margin-right: 4px;
+}
