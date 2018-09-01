@@ -4,19 +4,7 @@ import {FlatTreeControl} from '@angular/cdk/tree';
 import {MatTreeFlatDataSource, MatTreeFlattener} from '@angular/material/tree';
 import {BehaviorSubject, Subject} from 'rxjs';
 import {debounceTime, distinctUntilChanged} from "rxjs/operators";
-
-export class customSelectionModule<T> extends SelectionModel<T> {
-  constructor(multiple: boolean) {
-    super(multiple);
-  }
-
-  private getSelectedCount() {
-    let selectedItems = this.selected;
-    return selectedItems.filter(item=> item instanceof TodoItemFlatNode && item.level!= 0).length;
-  }
-}
-
-
+import * as _ from 'lodash';
 
 export class TodoItemNode {
   children: TodoItemNode[];
@@ -91,29 +79,9 @@ export class AppComponent {
   treeFlattener: MatTreeFlattener<TodoItemNode, TodoItemFlatNode>;
   dataSource: MatTreeFlatDataSource<TodoItemNode, TodoItemFlatNode>;
   cameraTreeShow: boolean;
-
+  dataNodes: Array<TodoItemFlatNode>;
   /** The selection for checklist */
   checklistSelection = new customSelectionModule<TodoItemFlatNode>(true /* multiple */);
-
-
-  onClick(event) {
-    if(!document.getElementById("cameraTree").contains(event.target)){
-      this.cameraTreeShow = false;
-    }
-  }
-
-  private clearFilter(): void {
-    //this.treeControl.dataNodes.forEach();
-  }
-
-  private filterByName(term: string): void {
-    const filteredItems = this.treeControl.dataNodes.filter(x => x.name.toLowerCase().indexOf(term.toLowerCase()) === -1);
-    filteredItems.map(x => {
-
-    });
-    const visibleItems = this.treeControl.dataNodes.filter(x => x.name.toLowerCase().indexOf(term.toLowerCase()) > -1 );
-    this.treeControl.dataNodes = visibleItems;
-  }
 
   constructor(private database: ChecklistDatabase) {
     this.cameraTreeShow = false;
@@ -121,13 +89,19 @@ export class AppComponent {
       this.isExpandable, this.getChildren);
     this.treeControl = new FlatTreeControl<TodoItemFlatNode>(this.getLevel, this.isExpandable);
     this.dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
-
+    this.dataNodes = [];
     database.dataChange.subscribe(data => {
       this.dataSource.data = data;
+      this.dataNodes = JSON.parse(JSON.stringify(this.dataSource.data))
+      // window.setTimeout(function(){
+      //   Object.assign(_this.dataNodes, _this.dataSource.data)
+
+      // },0)
     });
+
     this.searchFilter.pipe(debounceTime(500), distinctUntilChanged())
       .subscribe(value => {
-        if (value && value.length >= 3) {
+        if (value && value.length >= 2) {
           this.filterByName(value);
         } else {
           this.clearFilter();
@@ -183,6 +157,64 @@ export class AppComponent {
       ? this.checklistSelection.select(...descendants)
       : this.checklistSelection.deselect(...descendants);
   }
+
+  onClick(event) {
+    if(document.getElementById("cameraTree")){
+      if(!document.getElementById("cameraTree").contains(event.target)){
+        this.cameraTreeShow = false;
+      }
+    }
+  }
+
+  clearFilter(): void {
+    this.dataSource.data = this.dataNodes;
+    this.checklistSelection.selected.forEach(item=>{
+      this.checklistSelection.select(item)
+    })
+    this.treeControl.expandAll();
+  }
+
+  filterByName(term: string): void {
+    let filterlist = [];
+    let result = [];
+
+    filterlist = JSON.parse(JSON.stringify(this.dataNodes))
+    for(var i=0; i<filterlist.length; i++){
+      result.push(this.filtering(term, filterlist[i], filterlist));
+    }
+    this.dataSource.data = result.filter(item=>item);
+
+    this.checklistSelection.selected.forEach(item=>{
+      this.checklistSelection.select(item)
+    })
+    //this.checklistSelection.select(this.checklistSelection.selected[0])
+
+    this.treeControl.expandAll();
+  }
+
+  filtering(term: string, node: Object, list: Array<Object>): Array<Object>{
+      if(node.children && node.name.indexOf(term) >-1){
+     
+        return node;
+      }
+      if(node.children){
+        for(var i=0; i<node.children.length; i++){
+          node.children = this.filtering(term, node.children[i], node.children);
+        }
+        if(node.children.length == 0 && node.name.indexOf(term) <0){
+          return null;
+        }
+        else{
+
+          return node;
+        }
+      }
+      else{
+        let result = list.filter(item => item.name.indexOf(term) > 0);
+        return result;
+      }
+  }
+
   selectAll(): void{
     const nodes = this.treeControl.dataNodes;
     nodes.forEach(node=>{
@@ -201,18 +233,6 @@ export class AppComponent {
     })
   }
 
-  // countSelected():void{
-  //   this.selectedCount = 0;
-  //   this.treeControl.dataNodes.forEach(item=>{
-  //     if(item instanceof TodoItemFlatNode && this.checklistSelection.isSelected(item)){
-  //       this.selectedCount ++;
-  //     }
-  //     else if(this.selectedCount > 0){
-  //       this.selectedCount --;
-  //     }
-  //   })
-  //
-  // }
 
   filterChanged(keyword: string):void{
     this.searchFilter.next(keyword);
@@ -222,7 +242,18 @@ export class AppComponent {
     this.cameraTreeShow = !this.cameraTreeShow;
     event.stopPropagation();
   }
+
   searchFilter: Subject<string> = new Subject<string>();
 
+}
 
+export class customSelectionModule<T> extends SelectionModel<T> {
+  constructor(multiple: boolean) {
+    super(multiple);
+  }
+
+  private getSelectedCount() {
+    let selectedItems = this.selected;
+    return selectedItems.filter(item=> item instanceof TodoItemFlatNode && item.level!= 0).length;
+  }
 }

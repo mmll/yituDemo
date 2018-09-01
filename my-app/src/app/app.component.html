@@ -1,17 +1,18 @@
-<div camera-toggle>
+ <div camera-toggle>
   <mat-toolbar color="primary">
     <span>DEMO</span>
   </mat-toolbar>
   <div class="main-contain">
-    <button mat-button color="primary" (click)="showCameraSelection()" autofocus>choose the camera </button>
-    <span>{{checklistSelection.getSelectedCount()}}</span>
+    <button mat-button color="primary" (click)="showCameraSelection()" autofocus>请选择摄像头 </button>
+    <span *ngIf="checklistSelection.getSelectedCount() > 0">
+    已选{{checklistSelection.getSelectedCount()}}个摄像头</span>
     <div id="cameraTree" *ngIf="cameraTreeShow">
       <div>
-        <button mat-mini-fab class="flow_button" (click)="selectAll()">Select All</button>
-        <button mat-mini-fab class="flow_button" (click)="reset()">Reset</button>
+        <button mat-mini-fab class="flow_button" (click)="selectAll()">全选</button>
+        <button mat-mini-fab class="flow_button" (click)="reset()">清空</button>
         <form class="example-form">
           <mat-form-field class="example-full-width">
-          <input matInput placeholder="Please to choose the camera" (input)="filterChanged($event.target.value)" >
+          <input matInput placeholder="搜索摄像头" (input)="filterChanged($event.target.value)" >
           </mat-form-field>
         </form>
       </div>
@@ -30,7 +31,7 @@
                 {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
             </mat-icon>
           </button>
-          <mat-checkbox [checked]="descendantsAllSelected(node)"
+          <mat-checkbox   [checked]="descendantsAllSelected(node)"
                           [indeterminate]="descendantsPartiallySelected(node)"
                           (change)="todoItemSelectionToggle(node)">{{node.name}}</mat-checkbox>
           </mat-tree-node>
