@@ -77,7 +77,7 @@ export class AppComponent {
   nestedNodeMap = new Map<TodoItemNode, TodoItemFlatNode>();
   treeControl: FlatTreeControl<TodoItemFlatNode>;
   treeFlattener: MatTreeFlattener<TodoItemNode, TodoItemFlatNode>;
-  dataSource: MatTreeFlatDataSource<TodoItemNode, TodoItemFlatNode>;
+  dataSource: MatTreeFlatDataSource<any,any>;
   cameraTreeShow: boolean;
   dataNodes: Array<TodoItemFlatNode>;
   /** The selection for checklist */
@@ -106,6 +106,8 @@ export class AppComponent {
         } else {
           this.clearFilter();
         }
+        // this.checklistSelection.selected.forEach(node=> this.checklistSelection.select(node));
+
       });
   }
 
@@ -187,14 +189,12 @@ export class AppComponent {
     this.checklistSelection.selected.forEach(item=>{
       this.checklistSelection.select(item)
     })
-    //this.checklistSelection.select(this.checklistSelection.selected[0])
 
     this.treeControl.expandAll();
   }
 
-  filtering(term: string, node: Object, list: Array<Object>): Array<Object>{
-      if(node.children && node.name.indexOf(term) >-1){
-     
+  filtering(term: string, node: any, list: Array<any>): Array<any>{
+      if(node.children && node.name.indexOf(term) > -1){
         return node;
       }
       if(node.children){
@@ -205,7 +205,6 @@ export class AppComponent {
           return null;
         }
         else{
-
           return node;
         }
       }
